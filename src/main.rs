@@ -1,6 +1,6 @@
 use erased_serde::Serialize as ErasedSerialize;
 use eyre::Result;
-use serde::{Serialize, Serializer};
+use serde::Serialize;
 use std::sync::Arc;
 
 trait FarmersMarketStand {
@@ -174,7 +174,7 @@ fn extract_grocery_data<T: FarmersMarketStand>(
         meat_status: item.read_meat_status()?,
         halal: item.read_halal()?,
         kosher: item.read_kosher()?,
-        market_specific_data: MarketSpecificData(Arc::new(item.read_market_specific_data()?)),
+        market_specific_data: Arc::new(item.read_market_specific_data()?),
     })
 }
 
@@ -188,18 +188,6 @@ pub enum MeatStatus {
 #[derive(Serialize, Clone)]
 pub struct CustomerId(pub u64);
 
-impl Serialize for MarketSpecificData {
-    #[inline]
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        (*self.0).serialize(serializer)
-    }
-}
-
-#[derive(Clone)]
-pub struct MarketSpecificData(Arc<dyn ErasedSerialize>);
 
 #[derive(Serialize, Clone)]
 pub struct GroceryItem {
@@ -214,7 +202,7 @@ pub struct GroceryItem {
     pub meat_status: MeatStatus,
     pub halal: bool,
     pub kosher: bool,
-    pub market_specific_data: MarketSpecificData,
+    pub market_specific_data: Arc<dyn ErasedSerialize>,
 }
 
 fn main() -> Result<()> {
